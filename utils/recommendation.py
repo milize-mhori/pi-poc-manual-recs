@@ -90,34 +90,21 @@ def recommend_service_providers(data):
             elif col in ['合計出動率', 'Paa-S使用率', '遠方出動比率', '夜間出動比率']:
                 df_gps_tmp2[col] = df_gps_tmp2[col].fillna(0)
                 
-        print('Paa-S端末絞込み後 :', len(df_gps_tmp2))
+        print('絞込み後 :', len(df_gps_tmp2))
         
         # データ連結 (拠点のデータとPaa-S端末の車両データ)
-        print(f'拠点データ件数: {len(df_sp_tmp2)}')
-        print(f'Paa-S端末データ件数: {len(df_gps_tmp2)}')
         df_tmp = pd.concat([df_sp_tmp2, df_gps_tmp2])
-        print(f'結合後データ件数: {len(df_tmp)}')
                 
         point = (row['トラブル場所緯度'], row['トラブル場所経度'])
         df_tmp['直線距離'] = df_tmp.apply(lambda row2 : haversine(point, (row2['緯度'], row2['経度'])), axis = 1)
         
         # 直線距離が近い協力会社の絞り込み
-        print(f'recommend_num設定値: {recommend_num}')
-        df_tmp = df_tmp.sort_values('直線距離').head(recommend_num).copy()
-        print(f'直線距離絞込み後データ件数: {len(df_tmp)}')        
+        df_tmp = df_tmp.sort_values('直線距離').head(recommend_num).copy()        
         
         # openrouteserviceを用いて経路距離を算出
-        print(f"経路距離・到着時間を計算中... (対象件数: {len(df_tmp)}件)")
-        print("※APIレート制限により、1件あたり約2.5秒かかります")
-        
         # df_tmp['経路距離'] = df_tmp.apply(lambda row2 : get_route_distance2(point, (row2['緯度'], row2['経度'])), axis = 1)
-        results_list = []
-        for idx, row2 in df_tmp.iterrows():
-            print(f"進捗: {len(results_list) + 1}/{len(df_tmp)}")
-            result = get_route_distance2(point, (row2['緯度'], row2['経度']))
-            results_list.append(result)
-        
-        df_tmp[['経路距離', '到着時間']] = pd.DataFrame(results_list, index=df_tmp.index)
+        df_tmp[['経路距離', '到着時間']] = pd.DataFrame(df_tmp.apply(lambda row2 : get_route_distance2(point, (row2['緯度'], row2['経度'])), 
+                                                           axis = 1).tolist(), index=df_tmp.index)
         
         # 平均値・標準偏差の計算 & スコアの計算
         df_tmp = calc_scores(df_tmp)
@@ -129,6 +116,7 @@ def recommend_service_providers(data):
         df_tmp = df_tmp.merge(df_request_tmp2[['業者CD', '出動']], on = '業者CD', how = 'left')
         
         # 結果の格納と出力
+        output_dir3 = set_output_dir()
         for logic in logics.keys():
             print(f'<ロジック : {logic}>')
             # ソート
@@ -137,13 +125,10 @@ def recommend_service_providers(data):
             # 結果の格納
             results[(row['受付番号'], logic)] = df_tmp2
             
-            # 結果の出力
-            output_dir = config['recommendation']['output_dir']
-            os.makedirs(os.path.join(output_dir , 'まとめ/csv'), exist_ok=True)
-            file = os.path.join(output_dir, f'まとめ/csv/【{row["受付番号"]}】レコメンド結果_{logic}.csv') 
-            df_tmp2[columns].to_csv(file, encoding = 'utf-8-sig', index = False)
+            # csv版結果の出力
+            output_results_csv(df_tmp2, logic, columns, row['受付番号'], output_dir3)
         
-        # エクセルファイルに出力
-        output_results_excel(results, logics, columns, row["受付番号"])
+        # エクセルファイルに結果の出力
+        output_results_excel(results, logics, columns, row["受付番号"], output_dir3)
             
     return results

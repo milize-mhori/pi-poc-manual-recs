@@ -3,10 +3,10 @@ import pandas as pd
 
 def calc_scores(df):    
     # カラム初期化
-    df['スコア_前回'] = 0
-    df['スコア0'] = 0
-    df['スコア1'] = 0
-    df['スコア2'] = 0
+    df['スコア0_1'] = 0
+    df['スコア0_2'] = 0
+    df['スコア1_1'] = 0
+    df['スコア1_2'] = 0
     df['RI1'] = 0
     df['RI2'] = 0
     
@@ -23,7 +23,7 @@ def calc_scores(df):
         else:
             df['RI2'] += df[f'(1 - {col})']
     
-    # スコア0,スコア1, スコア2算出  
+    # 各種スコア算出  
     # 標準化
     col2 = '(1 - 合計出動率)'
     df[f'{col2}_zスコア'] = (df[col2] - df[col2].mean()) / df[col2].std(ddof=0)
@@ -32,22 +32,22 @@ def calc_scores(df):
         # 標準化
         df[f'{col}_zスコア'] = (df[col] - df[col].mean()) / df[col].std(ddof=0)              
                 
-        # スコア_前回
+        # スコア0_1
         if col in ['経路距離']:
-            df['スコア_前回'] += df[f'{col}_zスコア']
-            df['スコア_前回'] += df[f'{col2}_zスコア']
+            df['スコア0_1'] += df[f'{col}_zスコア']
+            df['スコア0_1'] += df[f'{col2}_zスコア']
             
-        # スコア0
+        # スコア0_2
         if col in ['到着時間']:
-            df['スコア0'] += df[f'{col}_zスコア']
-            df['スコア0'] += df[f'{col2}_zスコア']
+            df['スコア0_2'] += df[f'{col}_zスコア']
+            df['スコア0_2'] += df[f'{col2}_zスコア']
             
-        # スコア1
+        # スコア1_1
         if col in ['到着時間', 'RI1']: 
-            df['スコア1'] += df[f'{col}_zスコア']
+            df['スコア1_1'] += df[f'{col}_zスコア']
         
-        # スコア2
+        # スコア1_2
         if col in ['到着時間', 'RI2']: 
-            df['スコア2'] += df[f'{col}_zスコア']
+            df['スコア1_2'] += df[f'{col}_zスコア']
             
     return df

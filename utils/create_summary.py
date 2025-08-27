@@ -30,11 +30,11 @@ def create_summary(df_request):
 
     # データ格納
     for reception_number in reception_numbers:
-        tmp_dict['受付番号'].append(reception_number)
+        tmp_dict['受付番号'].append(reception_number)        
         
+        output_dir3 = set_output_dir()
         for i, key in enumerate(logics.keys()):
-            output_dir = config['recommendation']['output_dir']
-            file = os.path.join(output_dir , f'まとめ/【{reception_number}】レコメンド結果.xlsx')
+            file = os.path.join(output_dir3, f'受付番号別結果/【{reception_number}】レコメンド結果.xlsx')
             df_recommend = pd.read_excel(file, sheet_name = i)
             
             mask = df_recommend['出動'] == '〇'
@@ -108,4 +108,4 @@ def create_summary(df_request):
     df_summary = df_summary[columns]    
     
     # サマリ出力
-    output_summary_excel(df_summary)
+    output_summary_excel(df_summary, output_dir3)
