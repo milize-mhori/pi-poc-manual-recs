@@ -4,6 +4,10 @@ pandas>=1.3.0
 
 # 地理・距離計算
 haversine>=2.5.0
+openrouteservice>=2.3.0
+
+# 地図・可視化
+branca>=0.4.0
 
 # Excel操作
 openpyxl>=3.0.0
